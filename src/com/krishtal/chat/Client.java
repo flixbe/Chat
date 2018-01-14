@@ -18,6 +18,8 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
+import com.krishtal.chat.net.Net;
+
 public class Client extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -33,6 +35,14 @@ public class Client extends JFrame {
 		this.name = name;
 		this.address = address;
 		this.port = port;	
+		
+		Net net = new Net(port);
+		boolean connected = net.openConnection(address, port);
+		
+		if (!connected) {
+			System.err.println("Connection failed...");
+			console("Connection failed...");
+		}
 		
 		createWindow();
 		console("You are trying to connect to: " + address + ", port: " + port + ", user name: " + name);

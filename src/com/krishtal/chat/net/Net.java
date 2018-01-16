@@ -19,9 +19,9 @@ public class Net {
 		this.port = port;
 	}
 	
-	public boolean openConnection(String address, int port) {
+	public boolean openConnection(String address) {
 		try {
-			socket = new DatagramSocket(port);
+			socket = new DatagramSocket();
 			ip = InetAddress.getByName(address);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
@@ -55,6 +55,7 @@ public class Net {
 				e.printStackTrace();
 			}
 		});
+		send.start();
 	}
 	
 	

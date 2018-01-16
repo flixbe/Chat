@@ -30,21 +30,26 @@ public class Client extends JFrame {
 	
 	private String name, address;
 	private int port;
+	private boolean connected = false;
+	
+	private Net net = null;
 	
 	public Client(String name, String address, int port) {
 		this.name = name;
 		this.address = address;
 		this.port = port;	
 		
-		Net net = new Net(port);
-		boolean connected = net.openConnection(address, port);
+		net = new Net(port);
+		connected = net.openConnection(address);
 		
 		if (!connected) {
-			System.err.println("Connection failed...");
+			System.out.println("Connection failed...");
 			console("Connection failed...");
-		}
-		
+		}		
 		createWindow();
+		
+		String connectionPacket = "/c/" + name + " connected from " + address + ":" + port;
+		net.send(connectionPacket.getBytes());
 		console("You are trying to connect to: " + address + ", port: " + port + ", user name: " + name);
 	}
 	
@@ -133,6 +138,7 @@ public class Client extends JFrame {
 		if (message.equals("")) return;
 		message = name + ": " + message;
 		console(message);
+		net.send(message.getBytes());
 		textMessage.setText("");
 	}
 	

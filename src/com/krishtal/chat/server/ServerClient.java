@@ -17,4 +17,8 @@ public class ServerClient {
 		this.ID = id;
 	}
 	
+	public int getID() {
+		return ID;
+	}
+	
 }

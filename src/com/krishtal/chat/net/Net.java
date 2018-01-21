@@ -18,7 +18,7 @@ public class Net {
 	public Net(int port) {
 		this.port = port;
 	}
-	
+
 	public boolean openConnection(String address) {
 		try {
 			socket = new DatagramSocket();
@@ -33,7 +33,7 @@ public class Net {
 		
 		return true;
 	}
-	
+
 	public String receive() {
 		byte[] data = new byte[1024];
 		DatagramPacket packet = new DatagramPacket(data, data.length);

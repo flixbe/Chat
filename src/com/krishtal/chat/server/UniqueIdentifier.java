@@ -20,7 +20,7 @@ public class UniqueIdentifier {
 	private UniqueIdentifier() {		
 	}
 	
-	public static int getID() {
+	public static int getIdentifier() {
 		if (index > ids.size() - 1) index = 0;
 		return ids.get(index++);
 	}

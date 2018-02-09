@@ -31,7 +31,9 @@ public class Client extends JFrame {
 	private String name, address;
 	private int port;
 	private boolean connected = false;
+	private boolean running = false;
 	
+	private Thread run, listen;
 	private Net net = null;
 	
 	public Client(String name, String address, int port) {
@@ -48,9 +50,15 @@ public class Client extends JFrame {
 		}		
 		createWindow();
 		
-		String connectionPacket = "/c/" + name + " connected from " + address + ":" + port;
+		String connectionPacket = "/c/" + name + " connected from " + address + ":" + port;  //old code
 		net.send(connectionPacket.getBytes());
 		console("You are trying to connect to: " + address + ", port: " + port + ", user name: " + name);
+		
+		run = new Thread(() -> {
+			running = true;
+			listen();
+		}, "Running");
+		run.start();
 	}
 	
 	private void createWindow() {
@@ -133,7 +141,7 @@ public class Client extends JFrame {
 		
 		textMessage.requestFocusInWindow();
 	}
-	
+
 	public void send(String message) {
 		if (message.equals("")) return;
 		message = name + ": " + message;
@@ -143,9 +151,22 @@ public class Client extends JFrame {
 		textMessage.setText("");
 	}
 	
+	public void listen() {
+		listen = new Thread(() -> {
+			while (running) {
+				String message = net.receive();								
+				if (message.startsWith("/c/")) {
+					net.setID(Integer.parseInt(message.split("/c/|/e/")[1]));
+					console("Successfuly connected to server! ID: " + net.getID());
+				}
+			}
+		}, "Listen");
+		listen.start();
+	}
+	
 	public void console(String message) {
-		history.setCaretPosition(history.getDocument().getLength());
 		history.append(message + "\n\r");
+		history.setCaretPosition(history.getDocument().getLength());
 	}
 	
 }

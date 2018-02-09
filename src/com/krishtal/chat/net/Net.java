@@ -14,6 +14,7 @@ public class Net {
 	private Thread send;
 	
 	private int port;
+	private int ID = -1;
 	
 	public Net(int port) {
 		this.port = port;
@@ -42,7 +43,7 @@ public class Net {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		String message = new String(packet.toString());
+		String message = new String(packet.getData());
 		return message;
 	}
 	
@@ -54,9 +55,16 @@ public class Net {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		});
+		}, "Send");
 		send.start();
 	}
 	
+	public void setID(int ID) {
+		this.ID = ID;
+	}
+
+	public int getID() {
+		return ID;
+	}
 	
 }

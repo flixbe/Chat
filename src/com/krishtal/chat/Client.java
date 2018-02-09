@@ -8,6 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -50,7 +52,7 @@ public class Client extends JFrame {
 		}		
 		createWindow();
 		
-		String connectionPacket = "/c/" + name + " connected from " + address + ":" + port;  //old code
+		String connectionPacket = "/c/" + name + " connected from " + address + ":" + port;
 		net.send(connectionPacket.getBytes());
 		console("You are trying to connect to: " + address + ", port: " + port + ", user name: " + name);
 		
@@ -109,7 +111,7 @@ public class Client extends JFrame {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					send(textMessage.getText());
+					send(textMessage.getText(), true);
 				}
 			}
 		});
@@ -128,7 +130,7 @@ public class Client extends JFrame {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				send(textMessage.getText());
+				send(textMessage.getText(), true);
 			}
 		});
 		
@@ -139,14 +141,24 @@ public class Client extends JFrame {
 		contentPane.add(buttonSend, gbcButtonSend);
 		setVisible(true);
 		
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				String disconect = "/d/" + net.getID() + "/e/";
+				send(disconect, false);
+				net.close();
+				running = false;
+			}
+		});
+		
 		textMessage.requestFocusInWindow();
 	}
 
-	public void send(String message) {
+	public void send(String message, boolean text) {
 		if (message.equals("")) return;
-		message = name + ": " + message;
-		console(message);
-		message = "/m/" + message;
+		if (text) {
+			message = "/m/" + message;
+			message = name + ": " + message;
+		}
 		net.send(message.getBytes());
 		textMessage.setText("");
 	}
@@ -158,6 +170,10 @@ public class Client extends JFrame {
 				if (message.startsWith("/c/")) {
 					net.setID(Integer.parseInt(message.split("/c/|/e/")[1]));
 					console("Successfuly connected to server! ID: " + net.getID());
+				} else if (message.startsWith("/m/")) {
+					String text = message.substring(3);
+					text = text.split("/e/")[0];
+					console(text);
 				}
 			}
 		}, "Listen");

@@ -59,6 +59,14 @@ public class Net {
 		send.start();
 	}
 	
+	public void close() {
+		new Thread(() -> {
+			synchronized (socket) {			
+				socket.close();
+			}			
+		}).start();
+	}
+	
 	public void setID(int ID) {
 		this.ID = ID;
 	}

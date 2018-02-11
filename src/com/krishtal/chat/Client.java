@@ -157,10 +157,10 @@ public class Client extends JFrame {
 		if (message.equals("")) return;
 		if (text) {
 			message = name + ": " + message;
-			message = "/m/" + message + "/e/";
+			message = "/m/" + message;
+			textMessage.setText("");
 		}
 		net.send(message.getBytes());
-		textMessage.setText("");
 	}
 	
 	public void listen() {

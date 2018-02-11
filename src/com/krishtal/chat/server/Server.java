@@ -7,16 +7,21 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Server {
 
 	private List<ServerClient> clients = new ArrayList<ServerClient>();
+	private List<Integer> clientResponse = new ArrayList<Integer>();
 
 	private DatagramSocket socket;
 	private Thread serverRun, manageClients, receiveData, sendData;
 
 	private int port;
 	private boolean running = false;
+	private boolean raw = false;
+
+	private final int MAX_ATTEMPTS = 5;
 
 	public Server(int port) {
 		this.port = port;
@@ -33,6 +38,26 @@ public class Server {
 			System.out.println("Server started on port: " + port);
 			manage();
 			receive();
+			Scanner scanner = new Scanner(System.in);
+			while (running) {
+				String text = scanner.nextLine();
+				if (!text.startsWith("/")) {
+					sendToAll("/m/Server: " + text + "/e/");
+					continue;
+				}
+				text = text.substring(1);
+				if (text.equals("raw")) {
+					raw = !raw;
+				} else if (text.equals("clients")) {
+					System.out.println("Clients:");
+					System.out.println("~~~~~~~~");
+					for (int i = 0; i < clients.size(); i++) {
+						ServerClient c = clients.get(i);
+						System.out.println(c.name.trim() + "(" + c.getID() + "): " + c.address.toString() + ":" + c.port);
+					}
+					System.out.println("~~~~~~~~");
+				}
+			}
 		}, "Run");
 		serverRun.start();
 	}
@@ -40,6 +65,25 @@ public class Server {
 	private void manage() {
 		manageClients = new Thread(() -> {
 			while (running) {
+				sendToAll("/i/server");
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				for (int i = 0; i < clients.size(); i++) {
+					ServerClient c = clients.get(i);
+					if (!clientResponse.contains(c.getID())) {
+						if (c.attempt >= MAX_ATTEMPTS) {
+							disconect(c.getID(), false);
+						} else {
+							c.attempt++;
+						}
+					} else {
+						clientResponse.remove(new Integer(c.getID()));
+						c.attempt = 0;
+					}
+				}
 			}
 		}, "Manage");
 		manageClients.start();
@@ -48,7 +92,7 @@ public class Server {
 	private void receive() {
 		receiveData = new Thread(() -> {
 			while (running) {
-				System.out.println("Users: " + clients.size());
+
 				byte[] data = new byte[1024];
 				DatagramPacket packet = new DatagramPacket(data, data.length);
 				try {
@@ -75,6 +119,12 @@ public class Server {
 	}
 
 	private void sendToAll(String message) {
+		if (message.startsWith("/m/")) {
+			String text = message.substring(3);
+			text = text.split("/e/")[0];
+			System.out.println(message);
+		}
+		if (raw) System.out.println(message);
 		for (int i = 0; i < clients.size(); i++) {
 			ServerClient client = clients.get(i);
 			send(message.getBytes(), client.address, client.port);
@@ -88,7 +138,7 @@ public class Server {
 
 	private void process(DatagramPacket packet) {
 		String str = new String(packet.getData());
-
+		if (raw) System.out.println(str);
 		if (str.startsWith("/c/")) {
 			int id = UniqueIdentifier.getIdentifier();
 			System.out.println("ID: " + id);
@@ -101,14 +151,16 @@ public class Server {
 		} else if (str.startsWith("/d/")) {
 			String id = str.split("/d/|/e/")[1];
 			disconect(Integer.parseInt(id), true);
+		} else if (str.startsWith("/i/")) {
+			clientResponse.add(Integer.parseInt(str.split("/i/|/e/")[1]));
 		} else {
 			System.out.println(str);
 		}
 	}
-	
+
 	private void disconect(int id, boolean status) {
 		ServerClient c = null;
-		for (int i = 0; i < clients.size(); i++) { 
+		for (int i = 0; i < clients.size(); i++) {
 			if (clients.get(i).getID() == id) {
 				c = clients.get(i);
 				clients.remove(i);
@@ -117,9 +169,11 @@ public class Server {
 		}
 		String message = "";
 		if (status) {
-			message = "Client " + c.name + " (" + c.getID() + ") @ " + c.address.toString() + ":" + c.port + " disconnected."; 
+			message = "Client " + c.name.trim() + " ( ID: " + c.getID() + ") @ " + c.address.toString() + ":" + c.port
+					+ " disconnected.";
 		} else {
-			message = "Client " + c.name + " (" + c.getID() + ") @ " + c.address.toString() + ":" + c.port + " timed out.";
+			message = "Client " + c.name.trim() + " ( ID: " + c.getID() + ") @ " + c.address.toString() + ":" + c.port
+					+ " timed out.";
 		}
 		System.out.println(message);
 	}

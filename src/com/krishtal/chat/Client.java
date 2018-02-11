@@ -52,9 +52,9 @@ public class Client extends JFrame {
 		}		
 		createWindow();
 		
-		String connectionPacket = "/c/" + name + " connected from " + address + ":" + port;
-		net.send(connectionPacket.getBytes());
 		console("You are trying to connect to: " + address + ", port: " + port + ", user name: " + name);
+		String connectionPacket = "/c/" + name + "/e/";
+		net.send(connectionPacket.getBytes());
 		
 		run = new Thread(() -> {
 			running = true;
@@ -156,8 +156,8 @@ public class Client extends JFrame {
 	public void send(String message, boolean text) {
 		if (message.equals("")) return;
 		if (text) {
-			message = "/m/" + message;
 			message = name + ": " + message;
+			message = "/m/" + message + "/e/";
 		}
 		net.send(message.getBytes());
 		textMessage.setText("");
@@ -174,6 +174,9 @@ public class Client extends JFrame {
 					String text = message.substring(3);
 					text = text.split("/e/")[0];
 					console(text);
+				} else if (message.startsWith("/i/")) {
+					String text = "/i/" + net.getID() + "/e/";
+					send(text, false);
 				}
 			}
 		}, "Listen");

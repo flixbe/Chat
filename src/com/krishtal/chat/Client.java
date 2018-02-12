@@ -10,9 +10,12 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Arrays;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -29,6 +32,8 @@ public class Client extends JFrame {
 	private JPanel contentPane;
 	private JTextField textMessage;
 	private JTextArea history;
+	private JList listOnlineUsers;
+	private ImageIcon icon;
 	
 	private String name, address;
 	private int port;
@@ -71,8 +76,10 @@ public class Client extends JFrame {
 			e.printStackTrace();
 		}
 		
-		setResizable(false);
+		icon = new ImageIcon("res/client.png");
+		
 		setTitle("Messenger Client");
+		setIconImage(icon.getImage());
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(900, 600);
 		setLocationRelativeTo(null);
@@ -82,12 +89,8 @@ public class Client extends JFrame {
 		setContentPane(contentPane);
 		
 		GridBagLayout gblContentPane = new GridBagLayout();
-		gblContentPane.columnWidths = new int[] {16, 857, 7};
-		gblContentPane.columnWidths = new int[] {16, 857, 30, 7};
+		gblContentPane.columnWidths = new int[] {200, 857, 30, 7};
 		gblContentPane.rowHeights = new int[] {35, 475, 40};
-		gblContentPane.columnWeights = new double[] {1.0, Double.MIN_VALUE};
-		gblContentPane.columnWeights = new double[] {1.0, 1.0};
-		gblContentPane.rowWeights = new double[] {1.0, Double.MIN_VALUE};
 		
 		contentPane.setLayout(gblContentPane);
 		
@@ -95,16 +98,19 @@ public class Client extends JFrame {
 		history.setEditable(false);
 		history.setFont(new Font("consolas", Font.PLAIN, 14));
 		
-		JScrollPane scroll = new JScrollPane(history);
+		JScrollPane scrollHistory = new JScrollPane(history);
 		GridBagConstraints scrollConstraints = new GridBagConstraints();
 		scrollConstraints.insets = new Insets(0, 0, 5, 5);
 		scrollConstraints.fill = GridBagConstraints.BOTH;
-		scrollConstraints.gridx = 0;
+		scrollConstraints.gridx = 1;
 		scrollConstraints.gridy = 0;
 		scrollConstraints.gridwidth = 3;
 		scrollConstraints.gridheight = 2;
+		scrollConstraints.weightx = 1;
+		scrollConstraints.weighty = 1;
 		scrollConstraints.insets = new Insets(0, 7, 0, 0);
-		contentPane.add(scroll, scrollConstraints);
+		contentPane.add(scrollHistory, scrollConstraints);
+		
 		
 		textMessage = new JTextField();
 		textMessage.addKeyListener(new KeyAdapter() {
@@ -116,12 +122,25 @@ public class Client extends JFrame {
 			}
 		});
 		
+		listOnlineUsers = new JList();
+		listOnlineUsers.setFont(new Font("consolas", Font.PLAIN, 12));
+		
+		JScrollPane scrollUsers = new JScrollPane(listOnlineUsers);
+		GridBagConstraints gbcOnlineUsers = new GridBagConstraints();
+		gbcOnlineUsers.gridheight = 3;
+		gbcOnlineUsers.insets = new Insets(0, 0, 5, 5);
+		gbcOnlineUsers.fill = GridBagConstraints.BOTH;
+		gbcOnlineUsers.gridx = 0;
+		gbcOnlineUsers.gridy = 0;
+		contentPane.add(scrollUsers, gbcOnlineUsers);
+		
 		GridBagConstraints gbcTextMessage = new GridBagConstraints();
 		gbcTextMessage.insets = new Insets(0, 0, 0, 5);
 		gbcTextMessage.fill = GridBagConstraints.HORIZONTAL;
-		gbcTextMessage.gridx = 0;
+		gbcTextMessage.gridx = 1;
 		gbcTextMessage.gridy = 2;
-		gbcTextMessage.gridwidth = 2;
+		gbcTextMessage.weightx = 1;
+		gbcTextMessage.weighty = 0;
 		contentPane.add(textMessage, gbcTextMessage);
 		textMessage.setColumns(10);
 		
@@ -135,6 +154,7 @@ public class Client extends JFrame {
 		});
 		
 		GridBagConstraints gbcButtonSend = new GridBagConstraints();
+		gbcButtonSend.gridwidth = 2;
 		gbcButtonSend.insets = new Insets(0, 0, 0, 5);
 		gbcButtonSend.gridx = 2;
 		gbcButtonSend.gridy = 2;
@@ -177,6 +197,9 @@ public class Client extends JFrame {
 				} else if (message.startsWith("/i/")) {
 					String text = "/i/" + net.getID() + "/e/";
 					send(text, false);
+				} else if (message.startsWith("/u/")) {
+					String[] users = message.split("/u/|/n/|/e/");
+					updateUsersList(Arrays.copyOfRange(users, 1, users.length - 1));
 				}
 			}
 		}, "Listen");
@@ -186,6 +209,10 @@ public class Client extends JFrame {
 	public void console(String message) {
 		history.append(message + "\n\r");
 		history.setCaretPosition(history.getDocument().getLength());
+	}
+	
+	public void updateUsersList(String[] users) {
+		listOnlineUsers.setListData(users);
 	}
 	
 }

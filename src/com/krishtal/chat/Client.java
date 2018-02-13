@@ -177,7 +177,7 @@ public class Client extends JFrame {
 		if (message.equals("")) return;
 		if (text) {
 			message = name + ": " + message;
-			message = "/m/" + message;
+			message = "/m/" + message + "/e/";
 			textMessage.setText("");
 		}
 		net.send(message.getBytes());

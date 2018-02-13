@@ -5,7 +5,10 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
@@ -48,6 +51,11 @@ public class Server {
 				}
 				text = text.substring(1);
 				if (text.equals("raw")) {
+					if (raw) {
+						System.out.println("Raw mode off.");
+					} else { 
+						System.out.println("Raw mode on.");
+					}
 					raw = !raw;
 				} else if (text.equals("clients")) {
 					System.out.println("Clients:");
@@ -75,10 +83,11 @@ public class Server {
 								break;
 							}
 						}
-						if (exist) 
+						if (exist) {
 							disconect(id, true);
-						else 
+						} else { 
 							System.out.println("Client with id: " + id + " doesn't exist! Check ID number.");
+						}
 					} else {
 						for (int i = 0; i < clients.size(); i++) {
 							ServerClient c = clients.get(i);
@@ -88,12 +97,48 @@ public class Server {
 							}
 						}
 					}
+				} else if (text.equals("greetings")) {
+					for (int i = 0; i < clients.size(); i++) {
+						ServerClient c = clients.get(i);
+						String message = "/m/Server: Hello, dear " + c.name + ". Glad to see you.";
+						sendToAll(message + "/e/");
+					}					
+				} else if (text.equals("clear") || text.equals("cls")) {
+					for(int i = 0; i < 50; i++) { // clear console 
+					    System.out.println("");
+					}
+				} else if (text.equals("datatime")) {
+					DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+					Date date = new Date();
+					System.out.println(dateFormat.format(date));
+				} else if (text.equals("help") || text.equals("?")) {
+					printHelp();
+				} else if (text.equals("quit")) {
+					quit();
+				} else {
+					System.out.println("Unknown command.");
+					printHelp();
 				}
 			}
+			scanner.close();
 		}, "Run");
 		serverRun.start();
 	}
 
+	private void printHelp() {
+		System.out.println("Here is a list of all available commands:");
+		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+		System.out.println("/raw - enable raw mode.");
+		System.out.println("/clients - show all connected clients.");
+		System.out.println("/kick [user ID or username] - kicks a user");
+		System.out.println("/datatime - show current data and time.");
+		System.out.println("/greetings - show simple greetings to all clients in chat.");
+		System.out.println("/clear or /cls - clear console log.");
+		System.out.println("/help or /? - shows this help message.");
+		System.out.println("/quit - shuts down the server.");
+		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+	}
+	
 	private void manage() {
 		manageClients = new Thread(() -> {
 			while (running) {
@@ -140,6 +185,8 @@ public class Server {
 				DatagramPacket packet = new DatagramPacket(data, data.length);
 				try {
 					socket.receive(packet);
+				} catch (SocketException e) {
+					System.out.println("Terminated!\nAll clients disconected\nServer is shuted down");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -199,6 +246,14 @@ public class Server {
 		} else {
 			System.out.println(str);
 		}
+	}
+	
+	private void quit() {
+		for (int i = 0; i < clients.size(); i++ ) {
+			disconect(clients.get(i).getID(), true);
+		}
+		running = false;
+		socket.close();
 	}
 
 	private void disconect(int id, boolean status) {
